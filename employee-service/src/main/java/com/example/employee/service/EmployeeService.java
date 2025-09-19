@@ -5,7 +5,8 @@ import com.example.employee.domain.Employee;
 import com.example.employee.dto.DepartmentDTO;
 import com.example.employee.dto.EmployeeDTO;
 import com.example.employee.repo.EmployeeRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.example.employee.exception.EmployeeNotFoundException;
+import com.example.employee.exception.DuplicateEmailException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,14 +29,14 @@ public class EmployeeService {
     }
 
     public EmployeeDTO getById(Long id) {
-        Employee e = repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Employee not found"));
+        Employee e = repository.findById(id).orElseThrow(() -> new EmployeeNotFoundException(id));
         return toDTO(e);
     }
 
     @Transactional
     public EmployeeDTO create(EmployeeDTO dto) {
         if (repository.existsByEmail(dto.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new DuplicateEmailException(dto.getEmail());
         }
         Employee e = Employee.builder()
                 .firstName(dto.getFirstName())
