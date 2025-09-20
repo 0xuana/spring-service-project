@@ -1,42 +1,5 @@
 spring:
   application:
     name: DEPARTMENT-SERVICE
-
-  datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
-    username: postgres
-    password: 123456!
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    properties:
-      hibernate:
-        default_schema: department
-    open-in-view: false
-
-  flyway:
-    enabled: true
-    locations: classpath:/db/migration
-    schemas: department
-    default-schema: department
-    table: flyway_schema_history_departments
-    create-schemas: true
-    baseline-on-migrate: true
-    baseline-version: 0
-    validate-migration-naming: true
-
-server:
-  port: 8082
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
+  config:
+    import: configserver:http://localhost:8888

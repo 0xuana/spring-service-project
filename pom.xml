@@ -8,6 +8,7 @@
 
   <modules>
     <module>discovery-service</module>
+    <module>config-server</module>
     <module>api-gateway</module>
     <module>employee-service</module>
     <module>department-service</module>
@@ -50,6 +51,27 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+
+  <profiles>
+    <profile>
+      <id>test-all</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>3.0.0-M8</version>
+            <configuration>
+              <includes>
+                <include>**/*Test.java</include>
+                <include>**/*Tests.java</include>
+              </includes>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
   <build>
     <pluginManagement>

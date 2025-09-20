@@ -1,5 +1,8 @@
 package com.example.employee.web;
+
 import com.example.employee.dto.EmployeeDTO;
+import com.example.employee.exception.DuplicateEmailException;
+import com.example.employee.exception.EmployeeNotFoundException;
 import com.example.employee.service.EmployeeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
@@ -104,7 +107,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *  12: monitoring all the time....
  */
 
-@WebMvcTest(EmployeeController.class)
+@WebMvcTest(
+    controllers = EmployeeController.class,
+    properties = {
+        "eureka.client.enabled=false",
+        "spring.cloud.config.enabled=false",
+        "spring.config.import=optional:file:./config/"
+    }
+)
 @DisplayName("EmployeeController (WebMvc slice)")
 public class EmployeeControllerTest {
     @Autowired MockMvc mvc;
@@ -118,13 +128,56 @@ public class EmployeeControllerTest {
     @Nested
     class List_and_Get {
         @Test
+        void list_returns_200_and_empty_array_when_no_employees() throws Exception {
+            when(service.getAll()).thenReturn(List.of());
+
+            mvc.perform(get("/api/v1/employees"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$").isArray())
+                    .andExpect(jsonPath("$").isEmpty());
+        }
+
+        @Test
         void list_returns_200_and_array() throws Exception {
             when(service.getAll()).thenReturn(List.of(
-                    EmployeeDTO.builder().id(1L).firstName("Alice").lastName("Nguyen").email("alice@example.com").build()
+                    EmployeeDTO.builder().id(1L).firstName("Alice").lastName("Nguyen").email("alice@example.com").departmentId(10L).build(),
+                    EmployeeDTO.builder().id(2L).firstName("Bob").lastName("Smith").email("bob@example.com").departmentId(20L).build()
             ));
             mvc.perform(get("/api/v1/employees"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$[0].email").value("alice@example.com"));
+                    .andExpect(jsonPath("$").isArray())
+                    .andExpect(jsonPath("$.length()").value(2))
+                    .andExpect(jsonPath("$[0].email").value("alice@example.com"))
+                    .andExpect(jsonPath("$[1].email").value("bob@example.com"));
+        }
+
+        @Test
+        void getById_returns_200_and_employee() throws Exception {
+            var employee = EmployeeDTO.builder()
+                .id(1L)
+                .firstName("John")
+                .lastName("Doe")
+                .email("john@example.com")
+                .departmentId(5L)
+                .build();
+
+            when(service.getById(1L)).thenReturn(employee);
+
+            mvc.perform(get("/api/v1/employees/1"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(1L))
+                    .andExpect(jsonPath("$.firstName").value("John"))
+                    .andExpect(jsonPath("$.lastName").value("Doe"))
+                    .andExpect(jsonPath("$.email").value("john@example.com"))
+                    .andExpect(jsonPath("$.departmentId").value(5L));
+        }
+
+        @Test
+        void getById_returns_404_when_employee_not_found() throws Exception {
+            when(service.getById(999L)).thenThrow(new EmployeeNotFoundException(999L));
+
+            mvc.perform(get("/api/v1/employees/999"))
+                    .andExpect(status().isNotFound());
         }
     }
 
@@ -140,16 +193,95 @@ public class EmployeeControllerTest {
         }
 
         @Test
+        void create_missing_firstName_returns_400() throws Exception {
+            var body = EmployeeDTO.builder().lastName("Last").email("test@example.com").build();
+            mvc.perform(post("/api/v1/employees")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(om.writeValueAsString(body)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void create_missing_lastName_returns_400() throws Exception {
+            var body = EmployeeDTO.builder().firstName("First").email("test@example.com").build();
+            mvc.perform(post("/api/v1/employees")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(om.writeValueAsString(body)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void create_invalid_email_format_returns_400() throws Exception {
+            var body = EmployeeDTO.builder()
+                .firstName("John")
+                .lastName("Doe")
+                .email("invalid-email")
+                .build();
+            mvc.perform(post("/api/v1/employees")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(om.writeValueAsString(body)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
         void create_valid_returns_201() throws Exception {
-            var req = EmployeeDTO.builder().firstName("Dina").lastName("Khan").email("dina@example.com").build();
-            var res = EmployeeDTO.builder().id(10L).firstName("Dina").lastName("Khan").email("dina@example.com").build();
+            var req = EmployeeDTO.builder()
+                .firstName("Dina")
+                .lastName("Khan")
+                .email("dina@example.com")
+                .departmentId(1L)
+                .build();
+            var res = EmployeeDTO.builder()
+                .id(10L)
+                .firstName("Dina")
+                .lastName("Khan")
+                .email("dina@example.com")
+                .departmentId(1L)
+                .build();
             when(service.create(any(EmployeeDTO.class))).thenReturn(res);
 
             mvc.perform(post("/api/v1/employees")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(om.writeValueAsString(req)))
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.id").value(10L));
+                    .andExpect(jsonPath("$.id").value(10L))
+                    .andExpect(jsonPath("$.firstName").value("Dina"))
+                    .andExpect(jsonPath("$.lastName").value("Khan"))
+                    .andExpect(jsonPath("$.email").value("dina@example.com"))
+                    .andExpect(jsonPath("$.departmentId").value(1L));
+        }
+
+        @Test
+        void create_duplicate_email_returns_409() throws Exception {
+            var body = EmployeeDTO.builder()
+                .firstName("John")
+                .lastName("Doe")
+                .email("existing@example.com")
+                .build();
+
+            when(service.create(any(EmployeeDTO.class)))
+                .thenThrow(new DuplicateEmailException("existing@example.com"));
+
+            mvc.perform(post("/api/v1/employees")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(om.writeValueAsString(body)))
+                    .andExpect(status().isConflict());
+        }
+
+        @Test
+        void create_with_empty_request_body_returns_400() throws Exception {
+            mvc.perform(post("/api/v1/employees")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{}"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void create_with_malformed_json_returns_400() throws Exception {
+            mvc.perform(post("/api/v1/employees")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{invalid json"))
+                    .andExpect(status().isBadRequest());
         }
     }
 }

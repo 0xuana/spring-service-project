@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: DEPARTMENT-SERVICE
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: 123456!
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    properties:
+      hibernate:
+        default_schema: department
+    open-in-view: false
+  flyway:
+    locations: classpath:/db/migration
+    schemas: department
+    default-schema: department
+    table: flyway_schema_history_departments
+    create-schemas: true
+    baseline-version: 0
+    validate-migration-naming: true
+
+server:
+  port: 8082
+
+# Department service specific logging
+logging:
+  level:
+    com.example.department: DEBUG
+    org.springframework.web: INFO
+
+# Feature flags specific to department service
+features:
+  enable-department-validation: true
+  enable-audit-logging: false

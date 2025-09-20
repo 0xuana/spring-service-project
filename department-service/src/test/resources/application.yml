@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: DEPARTMENT-SERVICE
+  config:
+    import: # Empty to override main config import
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password: password
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: false
+  flyway:
+    enabled: false
+  cloud:
+    config:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false
+
+employee:
+  service:
+    url: http://localhost:8081
+
+logging:
+  level:
+    org.springframework.cloud: ERROR
+    org.springframework.boot.autoconfigure: ERROR

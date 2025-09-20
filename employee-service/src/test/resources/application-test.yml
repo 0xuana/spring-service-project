@@ -1,6 +1,8 @@
 spring:
   profiles:
     active: test
+  config:
+    import: optional:classpath:/
   datasource:
     url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
@@ -12,6 +14,9 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
   flyway:
     enabled: false
+  cloud:
+    config:
+      enabled: false
 
 eureka:
   client:

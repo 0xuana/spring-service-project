@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: employee-service
+          uri: lb://EMPLOYEE-SERVICE
+          predicates:
+            - Path=/employees/**
+          filters:
+            - RewritePath=/employees(?<segment>/?.*), /api/v1/employees${segment}
+        - id: department-service
+          uri: lb://DEPARTMENT-SERVICE
+          predicates:
+            - Path=/departments/**
+          filters:
+            - RewritePath=/departments(?<segment>/?.*), /api/v1/departments${segment}
+
+server:
+  port: 8080
+
+# Gateway specific logging
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty: INFO
+
+# Feature flags specific to gateway
+features:
+  enable-request-logging: false
+  enable-rate-limiting: false

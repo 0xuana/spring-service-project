@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: discovery-service
+
+server:
+  port: 8761
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+  server:
+    wait-time-in-ms-when-sync-empty: 0
+
+# Discovery service specific logging
+logging:
+  level:
+    com.netflix.eureka: INFO
+    com.netflix.discovery: INFO
+
+# Feature flags specific to discovery service
+features:
+  enable-self-preservation: true
+  enable-registry-metrics: true

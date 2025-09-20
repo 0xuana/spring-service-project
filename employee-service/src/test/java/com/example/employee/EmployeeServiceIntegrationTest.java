@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
                         "org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration",
                 "eureka.client.enabled=false",
                 "spring.cloud.discovery.enabled=false",
+                "spring.cloud.config.enabled=false",
+                "spring.config.import=optional:file:./config/",
                 // If you restrict actuator exposure in prod, make sure health is exposed here:
                 "management.endpoints.web.exposure.include=health,info"
         }
