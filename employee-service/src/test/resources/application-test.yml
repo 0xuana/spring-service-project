@@ -2,7 +2,7 @@ spring:
   profiles:
     active: test
   config:
-    import: optional:classpath:/
+    import: ""
   datasource:
     url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
@@ -12,17 +12,23 @@ spring:
     hibernate:
       ddl-auto: create-drop
     database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: false
   flyway:
     enabled: false
   cloud:
     config:
       enabled: false
+    discovery:
+      enabled: false
 
 eureka:
   client:
     enabled: false
+    register-with-eureka: false
+    fetch-registry: false
 
 logging:
   level:
-    com.example: DEBUG
-    org.springframework.web: DEBUG
+    com.example: INFO
+    org.springframework.web: WARN
+    org.springframework.cloud: WARN

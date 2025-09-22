@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -231,6 +232,48 @@ public class EmployeeService {
 
     public Long getCountByDepartmentId(Long departmentId) {
         return repository.countByDepartmentId(departmentId);
+    }
+
+    @Transactional
+    public BulkCreateResponseDTO bulkCreate(List<EmployeeDTO> employees) {
+        List<EmployeeDTO> successful = new ArrayList<>();
+        List<BulkCreateResponseDTO.BulkCreateFailureDTO> failures = new ArrayList<>();
+
+        for (int i = 0; i < employees.size(); i++) {
+            EmployeeDTO employeeDTO = employees.get(i);
+            try {
+                EmployeeDTO created = create(employeeDTO, null); // No idempotency key for bulk
+                successful.add(created);
+            } catch (Exception e) {
+                String errorCode = "UNKNOWN_ERROR";
+                String reason = e.getMessage();
+
+                if (e instanceof DuplicateEmailException) {
+                    errorCode = "DUPLICATE_EMAIL";
+                } else if (e instanceof IllegalArgumentException) {
+                    errorCode = "VALIDATION_ERROR";
+                }
+
+                BulkCreateResponseDTO.BulkCreateFailureDTO failure =
+                    BulkCreateResponseDTO.BulkCreateFailureDTO.builder()
+                        .index(i)
+                        .employee(employeeDTO)
+                        .reason(reason)
+                        .errorCode(errorCode)
+                        .build();
+                failures.add(failure);
+
+                log.warn("Failed to create employee at index {}: {}", i, reason);
+            }
+        }
+
+        return BulkCreateResponseDTO.builder()
+                .totalProcessed(employees.size())
+                .successCount(successful.size())
+                .failureCount(failures.size())
+                .successful(successful)
+                .failures(failures)
+                .build();
     }
 
     private EmployeeDTO toDTOWithoutDepartment(Employee e) {

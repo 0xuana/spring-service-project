@@ -197,6 +197,19 @@ public class EmployeeController {
         return service.getCountByDepartmentId(departmentId);
     }
 
+    @Operation(summary = "Bulk create employees")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Bulk create completed"),
+        @ApiResponse(responseCode = "400", description = "Invalid input data",
+                content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    })
+    @PostMapping(":bulkCreate")
+    public BulkCreateResponseDTO bulkCreateEmployees(
+            @Valid @RequestBody BulkCreateRequestDTO request) {
+        log.info("Bulk creating {} employees", request.getEmployees().size());
+        return service.bulkCreate(request.getEmployees());
+    }
+
     // Backward compatibility - keep the old simple endpoints
     @GetMapping("/all")
     @Deprecated

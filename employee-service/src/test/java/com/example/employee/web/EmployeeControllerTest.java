@@ -112,7 +112,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     properties = {
         "eureka.client.enabled=false",
         "spring.cloud.config.enabled=false",
-        "spring.config.import=optional:file:./config/"
+        "spring.config.import="
     }
 )
 @DisplayName("EmployeeController (WebMvc slice)")

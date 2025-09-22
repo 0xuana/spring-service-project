@@ -11,7 +11,7 @@ import org.springframework.test.context.ActiveProfiles;
         "spring.flyway.enabled=false",
         "eureka.client.enabled=false",
         "spring.cloud.config.enabled=false",
-        "spring.config.import=optional:file:./config/"
+        "spring.config.import="
     }
 )
 @ActiveProfiles("test")

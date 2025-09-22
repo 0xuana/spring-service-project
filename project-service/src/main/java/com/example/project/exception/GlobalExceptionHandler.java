@@ -1,11 +1,10 @@
-package com.example.department.exception;
+package com.example.project.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -48,8 +47,8 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
-    @ExceptionHandler(DepartmentNotFoundException.class)
-    public ProblemDetail handleDepartmentNotFound(DepartmentNotFoundException ex, WebRequest request) {
+    @ExceptionHandler(ProjectNotFoundException.class)
+    public ProblemDetail handleProjectNotFound(ProjectNotFoundException ex, WebRequest request) {
         String traceId = getOrGenerateTraceId();
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
@@ -63,27 +62,27 @@ public class GlobalExceptionHandler {
         problemDetail.setProperty("traceId", traceId);
         problemDetail.setProperty("instance", request.getDescription(false).replace("uri=", ""));
 
-        logger.warn("Department not found: {} - traceId: {}", ex.getMessage(), traceId);
+        logger.warn("Project not found: {} - traceId: {}", ex.getMessage(), traceId);
 
         return problemDetail;
     }
 
-    @ExceptionHandler(DuplicateDepartmentException.class)
-    public ProblemDetail handleDuplicateDepartment(DuplicateDepartmentException ex, WebRequest request) {
+    @ExceptionHandler(EmployeeNotFoundException.class)
+    public ProblemDetail handleEmployeeNotFound(EmployeeNotFoundException ex, WebRequest request) {
         String traceId = getOrGenerateTraceId();
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-            HttpStatus.CONFLICT,
+            HttpStatus.NOT_FOUND,
             ex.getMessage()
         );
 
-        problemDetail.setType(URI.create("https://api.company.com/problems/duplicate-resource"));
-        problemDetail.setTitle("Duplicate Resource");
+        problemDetail.setType(URI.create("https://api.company.com/problems/employee-not-found"));
+        problemDetail.setTitle("Referenced Employee Not Found");
         problemDetail.setProperty("timestamp", Instant.now().toString());
         problemDetail.setProperty("traceId", traceId);
         problemDetail.setProperty("instance", request.getDescription(false).replace("uri=", ""));
 
-        logger.warn("Duplicate department conflict: {} - traceId: {}", ex.getMessage(), traceId);
+        logger.warn("Employee not found for project operation: {} - traceId: {}", ex.getMessage(), traceId);
 
         return problemDetail;
     }
@@ -98,18 +97,38 @@ public class GlobalExceptionHandler {
         );
 
         problemDetail.setType(URI.create("https://api.company.com/problems/duplicate-code"));
-        problemDetail.setTitle("Duplicate Code");
+        problemDetail.setTitle("Duplicate Project Code");
         problemDetail.setProperty("timestamp", Instant.now().toString());
         problemDetail.setProperty("traceId", traceId);
         problemDetail.setProperty("instance", request.getDescription(false).replace("uri=", ""));
 
-        logger.warn("Duplicate code conflict: {} - traceId: {}", ex.getMessage(), traceId);
+        logger.warn("Duplicate project code conflict: {} - traceId: {}", ex.getMessage(), traceId);
 
         return problemDetail;
     }
 
-    @ExceptionHandler(DepartmentInUseException.class)
-    public ProblemDetail handleDepartmentInUse(DepartmentInUseException ex, WebRequest request) {
+    @ExceptionHandler(DuplicateMemberException.class)
+    public ProblemDetail handleDuplicateMember(DuplicateMemberException ex, WebRequest request) {
+        String traceId = getOrGenerateTraceId();
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            ex.getMessage()
+        );
+
+        problemDetail.setType(URI.create("https://api.company.com/problems/duplicate-member"));
+        problemDetail.setTitle("Duplicate Project Member");
+        problemDetail.setProperty("timestamp", Instant.now().toString());
+        problemDetail.setProperty("traceId", traceId);
+        problemDetail.setProperty("instance", request.getDescription(false).replace("uri=", ""));
+
+        logger.warn("Duplicate project member conflict: {} - traceId: {}", ex.getMessage(), traceId);
+
+        return problemDetail;
+    }
+
+    @ExceptionHandler(ProjectHasMembersException.class)
+    public ProblemDetail handleProjectHasMembers(ProjectHasMembersException ex, WebRequest request) {
         String traceId = getOrGenerateTraceId();
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
@@ -118,13 +137,13 @@ public class GlobalExceptionHandler {
         );
 
         problemDetail.setType(URI.create("https://api.company.com/problems/resource-in-use"));
-        problemDetail.setTitle("Resource In Use");
+        problemDetail.setTitle("Project Has Active Members");
         problemDetail.setProperty("timestamp", Instant.now().toString());
         problemDetail.setProperty("traceId", traceId);
         problemDetail.setProperty("instance", request.getDescription(false).replace("uri=", ""));
-        problemDetail.setProperty("hint", "Remove all employees from this department before deleting it.");
+        problemDetail.setProperty("hint", "Remove all project members before deleting the project, or use cascade delete if supported.");
 
-        logger.warn("Department in use conflict: {} - traceId: {}", ex.getMessage(), traceId);
+        logger.warn("Project deletion blocked due to active members: {} - traceId: {}", ex.getMessage(), traceId);
 
         return problemDetail;
     }
