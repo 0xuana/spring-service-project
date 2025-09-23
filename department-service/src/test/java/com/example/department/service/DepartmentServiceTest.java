@@ -261,7 +261,7 @@ public class DepartmentServiceTest {
                 createDepartment(2L, "Marketing", "MKT")
             );
             var page = new PageImpl<>(departments, PageRequest.of(0, 20), 2);
-            when(repository.findAll(any(Pageable.class))).thenReturn(page);
+            when(repository.findAllWithFilters(eq(null), eq(null), any(Pageable.class))).thenReturn(page);
 
             var result = service.getAllPaginated(null, null, PageRequest.of(0, 20));
 
@@ -269,7 +269,7 @@ public class DepartmentServiceTest {
             assertThat(result.getTotalElements()).isEqualTo(2);
             assertThat(result.getPage()).isEqualTo(0);
             assertThat(result.getSize()).isEqualTo(20);
-            verify(repository).findAll(any(Pageable.class));
+            verify(repository).findAllWithFilters(eq(null), eq(null), any(Pageable.class));
         }
 
         @Test
@@ -277,13 +277,13 @@ public class DepartmentServiceTest {
         void returns_filtered_results_with_name_and_code() {
             var departments = List.of(createDepartment(1L, "Engineering", "ENG"));
             var page = new PageImpl<>(departments, PageRequest.of(0, 20), 1);
-            when(repository.findWithFilters(eq("Eng"), eq("ENG"), any(Pageable.class))).thenReturn(page);
+            when(repository.findAllWithFilters(eq("Eng"), eq("ENG"), any(Pageable.class))).thenReturn(page);
 
             var result = service.getAllPaginated("Eng", "ENG", PageRequest.of(0, 20));
 
             assertThat(result.getContent()).hasSize(1);
             assertThat(result.getContent().get(0).getName()).isEqualTo("Engineering");
-            verify(repository).findWithFilters("Eng", "ENG", any(Pageable.class));
+            verify(repository).findAllWithFilters(eq("Eng"), eq("ENG"), any(Pageable.class));
         }
     }
 

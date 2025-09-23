@@ -23,6 +23,9 @@ class DepartmentServiceValidationTest {
     @Mock
     private DepartmentRepository repository;
 
+    @Mock
+    private org.springframework.web.client.RestTemplate restTemplate;
+
     @InjectMocks
     private DepartmentService departmentService;
 

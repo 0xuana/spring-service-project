@@ -1,5 +1,6 @@
 package com.example.department;
 
+import com.example.department.config.TestConfig;
 import com.example.department.domain.Department;
 import com.example.department.repo.DepartmentRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,9 +8,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Nested;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -34,8 +36,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "spring.config.import="
     }
 )
-@AutoConfigureWebMvc
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Import(TestConfig.class)
 @DisplayName("Department Service Full Context Test (no DB)")
 public class DepartmentServiceApplicationTest {
 
@@ -55,14 +58,15 @@ public class DepartmentServiceApplicationTest {
         @Test
         @DisplayName("GET /api/v1/departments returns empty list when no departments")
         void getDepartments_returnsEmptyList_whenNoDepartments() throws Exception {
-            when(departmentRepository.findAll()).thenReturn(List.of());
+            when(departmentRepository.findAllWithFilters(any(), any(), any()))
+                .thenReturn(org.springframework.data.domain.Page.empty());
 
             mockMvc.perform(get("/api/v1/departments"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").isArray())
-                    .andExpect(jsonPath("$").isEmpty());
+                    .andExpect(jsonPath("$.content").isArray())
+                    .andExpect(jsonPath("$.content").isEmpty());
 
-            verify(departmentRepository).findAll();
+            verify(departmentRepository).findAllWithFilters(any(), any(), any());
         }
 
         @Test
@@ -71,27 +75,30 @@ public class DepartmentServiceApplicationTest {
             var departments = List.of(
                 Department.builder()
                     .id(1L)
+                    .code("ENG")
                     .name("Engineering")
                     .description("Software development")
                     .build(),
                 Department.builder()
                     .id(2L)
+                    .code("MKT")
                     .name("Marketing")
                     .description("Product marketing")
                     .build()
             );
 
-            when(departmentRepository.findAll()).thenReturn(departments);
+            when(departmentRepository.findAllWithFilters(any(), any(), any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(departments));
 
             mockMvc.perform(get("/api/v1/departments"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").isArray())
-                    .andExpect(jsonPath("$.length()").value(2))
-                    .andExpect(jsonPath("$[0].id").value(1L))
-                    .andExpect(jsonPath("$[0].name").value("Engineering"))
-                    .andExpect(jsonPath("$[1].name").value("Marketing"));
+                    .andExpect(jsonPath("$.content").isArray())
+                    .andExpect(jsonPath("$.content.length()").value(2))
+                    .andExpect(jsonPath("$.content[0].id").value(1L))
+                    .andExpect(jsonPath("$.content[0].name").value("Engineering"))
+                    .andExpect(jsonPath("$.content[1].name").value("Marketing"));
 
-            verify(departmentRepository).findAll();
+            verify(departmentRepository).findAllWithFilters(any(), any(), any());
         }
 
         @Test
@@ -141,6 +148,7 @@ public class DepartmentServiceApplicationTest {
             when(departmentRepository.save(any())).thenReturn(newDepartment);
 
             var requestDepartment = Department.builder()
+                .code("FIN")
                 .name("Finance")
                 .description("Financial operations")
                 .build();
@@ -169,6 +177,7 @@ public class DepartmentServiceApplicationTest {
             when(departmentRepository.save(any())).thenReturn(newDepartment);
 
             var requestDepartment = Department.builder()
+                .code("LEG")
                 .name("Legal")
                 .build();
 
@@ -190,6 +199,7 @@ public class DepartmentServiceApplicationTest {
             when(departmentRepository.existsByNameIgnoreCase("Engineering")).thenReturn(true);
 
             var requestDepartment = Department.builder()
+                .code("ENG")
                 .name("Engineering")
                 .description("Software development")
                 .build();
@@ -212,6 +222,7 @@ public class DepartmentServiceApplicationTest {
             when(departmentRepository.existsByNameIgnoreCase("engineering")).thenReturn(true);
 
             var requestDepartment = Department.builder()
+                .code("ENG")
                 .name("engineering")
                 .description("Software development")
                 .build();
@@ -276,6 +287,7 @@ public class DepartmentServiceApplicationTest {
             );
 
             var requestDepartment = Department.builder()
+                .code("OPS")
                 .name("Operations")
                 .description("Business operations")
                 .build();

@@ -10,12 +10,14 @@ import com.example.department.exception.DepartmentInUseException;
 import com.example.department.exception.DepartmentNotFoundException;
 import com.example.department.exception.DuplicateCodeException;
 import com.example.department.exception.DuplicateDepartmentException;
+import com.example.department.exception.GlobalExceptionHandler;
 import com.example.department.service.DepartmentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -31,6 +33,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(DepartmentController.class)
+@Import(GlobalExceptionHandler.class)
 @DisplayName("DepartmentController (WebMvc slice)")
 public class DepartmentControllerTest {
 
@@ -63,7 +66,7 @@ public class DepartmentControllerTest {
                 .last(true)
                 .build();
 
-            when(service.getAllPaginated(isNull(), isNull(), any(Pageable.class))).thenReturn(pageResponse);
+            when(service.getAllPaginated(any(), any(), any(Pageable.class))).thenReturn(pageResponse);
 
             mvc.perform(get("/api/v1/departments"))
                 .andExpect(status().isOk())
@@ -112,7 +115,7 @@ public class DepartmentControllerTest {
                 .last(true)
                 .build();
 
-            when(service.getAllPaginated(isNull(), isNull(), any(Pageable.class))).thenReturn(pageResponse);
+            when(service.getAllPaginated(any(), any(), any(Pageable.class))).thenReturn(pageResponse);
 
             mvc.perform(get("/api/v1/departments")
                     .param("page", "1")
@@ -427,12 +430,12 @@ public class DepartmentControllerTest {
         }
 
         @Test
-        @DisplayName("returns 400 when department has employees")
+        @DisplayName("returns 409 when department has employees")
         void returns_400_when_department_has_employees() throws Exception {
             doThrow(new DepartmentInUseException(1L, 5L)).when(service).deleteById(1L);
 
             mvc.perform(delete("/api/v1/departments/1"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isConflict());
         }
     }
 
