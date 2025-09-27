@@ -16,6 +16,12 @@ spring:
             - Path=/departments/**
           filters:
             - RewritePath=/departments(?<segment>/?.*), /api/v1/departments${segment}
+        - id: project-service
+          uri: lb://PROJECT-SERVICE
+          predicates:
+            - Path=/projects/**
+          filters:
+            - RewritePath=/projects(?<segment>/?.*), /api/v1/projects${segment}
 
 server:
   port: 8080
